@@ -4,5 +4,5 @@ __pycache__/
 wandb/
 !outputs/.gitkeep
 *_extracted/
-*.pt
+
 *.zip
