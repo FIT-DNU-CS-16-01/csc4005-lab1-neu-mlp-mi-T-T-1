@@ -74,12 +74,64 @@ Dropout |	0.3 |	0.3 |	0.5
 
 - Mục tiêu: Quan sát khả năng kiểm soát hiện tượng Overfitting, giúp mô hình tổng quát hóa tốt hơn trên tập Validation và Test.
 ## 3. Kết quả
-Đưa bảng configs → metrics, learning curves và nhận xét.
+### 3.1 Bảng so sánh cấu hình (Metrics)
+Chỉ số |	Run 1: Baseline (AdamW) |	Run 2: SGD |	Run 3: Strong Reg
+---------  | --------- | --------- | ---------
+Best Val Accuracy |	41.85% |	52.59% |	32.96%
+Test Accuracy |	38.15% |	50.37% |	34.44%
+Best Val Loss |	1.4993 |	1.3757 |	1.6286
+Test Loss |	1.4957 |	1.3544 |	1.6021
+
+### 3.2 Learning Curves (Nhận xét chung)
+- Baseline:
+
+![Learning Curves](outputs/baseline_adamw/curves.png)
+
+- Run 2 (SGD): Cho thấy xu hướng hội tụ tốt nhất và ổn định nhất về mặt độ chính xác trên cả tập Validation và Test.
+
+![Learning Curves](outputs/run_b_sgd/curves.png)
+
+- Run 3 (Strong Reg): Do áp dụng Dropout (0.5) và Weight Decay (0.001) quá cao, mô hình gặp khó khăn trong việc học các đặc trưng quan trọng, dẫn đến kết quả thấp nhất trong 3 kịch bản.
+
+![Learning Curves](outputs/run_c_strong_reg/curves.png)
+
+### 3.3 Confusion Matrix
+
+- Baseline:
+
+![Confusion Matrix](outputs/baseline_adamw/confusion_matrix.png)
+
+- Run 2 (SGD): 
+
+![Confusion Matrix](outputs/run_b_sgd/confusion_matrix.png)
+
+- Run 3 (Strong Reg): 
+
+![Confusion Matrix](outputs/run_c_strong_reg/confusion_matrix.png)
 
 ## 4. Phân tích
-- Cấu hình nào tốt nhất?
-- Dấu hiệu overfitting / underfitting là gì?
-- AdamW và SGD khác nhau ra sao trong thí nghiệm của bạn?
+
+### 4.1 Cấu hình tốt nhất
+Cấu hình Run 2 (SGD) là cấu hình tốt nhất với độ chính xác trên tập Test đạt 50.37%. Mặc dù MLP không phải là kiến trúc mạnh nhất cho bài toán hình ảnh, nhưng việc điều chỉnh Learning Rate lên 0.01 kết hợp với bộ tối ưu SGD đã giúp mô hình thoát khỏi các cực tiểu cục bộ tốt hơn so với AdamW trong bối cảnh này.
+### 4.2 Dấu hiệu Overfitting / Underfitting
+- Underfitting: Xuất hiện rõ rệt ở Run 3. Độ chính xác tập Test chỉ đạt ~34% và Precision của các lớp như Crazing, Inclusion bằng 0. Điều này cho thấy mô hình quá đơn giản hoặc bị kìm hãm bởi các tham số điều chuẩn quá mạnh, không thể học được sự khác biệt giữa các loại lỗi.
+
+- Overfitting: Xuất hiện nhẹ ở Run 1. Khoảng cách giữa best_val_loss (1.49) và test_loss bắt đầu có sự chênh lệch nhẹ về độ chính xác (Val 41% vs Test 38%).
+
+### 4.3 So sánh AdamW và SGD
+- AdamW (Run 1): Hội tụ nhanh nhưng dễ bị kẹt ở mức hiệu năng trung bình (~40%). Nó gặp khó khăn đặc biệt với lớp Inclusion (Recall = 0%).
+
+- SGD (Run 2): Với Learning Rate lớn hơn (0.01), SGD tỏ ra hiệu quả hơn trong việc phân loại các lớp khó. Ví dụ, lớp Patches đạt F1-score rất cao (0.79) so với AdamW chỉ đạt 0.53. SGD giúp mô hình có cái nhìn tổng quát hơn đối với bộ dữ liệu NEU.
 
 ## 5. Kết luận
-Chọn best config và nêu lý do.
+Mô hình được chọn là cấu hình Run 2 (SGD).
+
+Lý do lựa chọn:
+
+- Hiệu năng vượt trội: Đạt độ chính xác cao nhất trên tập Test (50.37%), cao hơn cấu hình Baseline gần 12%.
+
+- Khả năng phân loại đồng đều: Khác với Run 1 và Run 3 (bị liệt hoàn toàn ở lớp Inclusion), Run 2 đã bắt đầu nhận diện được đa số các lớp lỗi, đặc biệt là sự cải thiện mạnh mẽ ở lớp Crazing (Recall tăng từ 24% lên 73%).
+
+- Độ tin cậy: Khoảng cách giữa kết quả Validation và Test của Run 2 là rất nhỏ (~2%), chứng tỏ mô hình có khả năng tổng quát hóa tốt trên dữ liệu mới.
+
+
